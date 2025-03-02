@@ -1,3 +1,4 @@
 quart
-requests
+aiohttp
 postgreslite
+dotenvplus

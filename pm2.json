@@ -3,7 +3,7 @@
     {
       "name":"Status",
       "script":"index.py",
-      "interpreter" : "/home/alexflipnote/.pyenv/versions/3.10.2/bin/python",
+      "interpreter" : "/home/alexflipnote/.pyenv/versions/3.11.1/bin/python",
       "interpreter_args": "-u"
     }
   ]

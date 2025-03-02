@@ -1,58 +1,38 @@
-import json
-import asyncio
 import subprocess
 import time
 
+from dotenvplus import DotEnv
 from typing import Union
 from datetime import datetime
 from postgreslite import PostgresLite
 from quart import Quart, render_template
 
 from utils import default
+from utils.xela import xelAAPI
 
-with open("./config.json", "r") as f:
-    config = json.load(f)
+config = DotEnv(".env")
 
 app = Quart(__name__)
-xelA = default.xelA()
 discordstatus = default.DiscordStatus()
 
 db = PostgresLite("./storage.db").connect()
+xela = xelAAPI(db=db, config=config)
 
 git_log = subprocess.getoutput('git log -1 --pretty=format:"%h %s" --abbrev-commit').split(" ")
-git_rev = git_log[0]
-git_commit = " ".join(git_log[1:])
-
-database_xela_cache: list[dict] = []
-
-
-async def _task_refresh_db_cache():
-    while True:
-        _, updated = xelA._fetch()
-        if updated:
-            db.execute(
-                "INSERT INTO ping (users, servers, user_installs, avg_us, ping_ws, ping_rest) "
-                "VALUES (?, ?, ?, ?, ?, ?)",
-                xelA.users, xelA.servers, xelA.user_installs,
-                xelA.avg_users_server, xelA.ping_ws, xelA.ping_rest
-            )
-            global database_xela_cache
-            database_xela_cache = db.fetch("SELECT * FROM ping ORDER BY created_at DESC LIMIT 25")
-        await asyncio.sleep(5)
+git_rev, git_commit = (git_log[0], " ".join(git_log[1:]))
 
 
 @app.before_serving
 async def startup():
-    app.add_background_task(_task_refresh_db_cache)
-
-
-def str_datetime(timestamp: str) -> datetime:
-    return datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+    xela.update_cache()
+    app.add_background_task(xela._background_task)
 
 
 def unix_timestamp(timestamp: Union[str, datetime]) -> int:
     if isinstance(timestamp, str):
-        return time.mktime(str_datetime(timestamp).timetuple())
+        return time.mktime(
+            datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").timetuple()
+        )
     elif isinstance(timestamp, datetime):
         return time.mktime(timestamp.timetuple())
     else:
@@ -61,30 +41,28 @@ def unix_timestamp(timestamp: Union[str, datetime]) -> int:
 
 @app.route("/")
 async def index():
-    reverse_database_xela_cache = database_xela_cache[::-1]
+    reverse_database_xela_cache = xela.cache_data[::-1]
+    discord_data = await discordstatus.fetch()
+
     return await render_template(
         "index.html",
-        bot=xelA,
-        discordstatus=discordstatus.fetch(),
-        domain=config.get("domain", f"http://localhost:{config['port']}"),
+        bot=xela,
+        discordstatus=discord_data,
         git_rev=git_rev,
         git_commit=git_commit,
         top_stats={
-            "WS / REST": f"{xelA.ping_ws:,} ms / {xelA.ping_rest:,} ms",
-            "RAM": xelA.ram,
-            "DB entries": f"{xelA.database:,}",
-            "Server Installs": f"{xelA.servers:,}",
-            "User Installs": f"{xelA.user_installs:,}",
-            "Viewable users": f"{xelA.users:,}",
+            "WebSocket Ping": f"{xela.ping_ws:,} ms",
+            "REST Ping": f"{xela.ping_rest:,} ms",
+            "RAM": xela.ram,
+            "Server Installs": f"{xela.server_installs:,}",
+            "User Installs": f"{xela.user_installs:,}",
+            "DB Entries": f"{xela.database:,}",
         },
-        data=database_xela_cache,
-        data_count=len(database_xela_cache),
+        data=xela.cache_data,
+        data_count=len(xela.cache_data),
         lists={
             "ws": [g["ping_ws"] for g in reverse_database_xela_cache],
             "rest": [g["ping_rest"] for g in reverse_database_xela_cache],
-            "servers": [g["servers"] for g in reverse_database_xela_cache],
-            "avg_us": [g["avg_us"] for g in reverse_database_xela_cache],
-            "users": [g["users"] for g in reverse_database_xela_cache],
             "timestamps": [
                 unix_timestamp(g["created_at"])
                 for g in reverse_database_xela_cache
@@ -93,23 +71,33 @@ async def index():
     )
 
 
-@app.route("/data.json")
+@app.route("/api/history")
 async def index_json():
-    json_output = {}
+    payload = {
+        "current": {
+            "ping_ws": xela.ping_ws,
+            "ping_rest": xela.ping_rest,
+            "server_installs": xela.server_installs,
+            "user_installs": xela.user_installs,
+        }
+    }
 
-    for k, v in xelA.__dict__.items():
-        json_output[k] = v
+    payload["history"] = []
 
-    json_output["history"] = []
-    for g in database_xela_cache:
-        try:
-            del g["id"]
-        except (ValueError, KeyError):
-            pass  # idk how this fails, I fixed this from work with nano
-        json_output["history"].append(g)
+    for g in xela.cache_data:
+        payload["history"].append({
+            "server_installs": g["server_installs"],
+            "user_installs": g["user_installs"],
+            "ping_ws": g["ping_ws"],
+            "ping_rest": g["ping_rest"],
+            "created_at": g["created_at"]
+        })
 
-    return json_output
+    return payload
 
 
-app.config["JSON_SORT_KEYS"] = False
-app.run(port=config["port"], debug=config["debug"])
+app.run(
+    host=config["HTTP_HOST"],
+    port=config["HTTP_PORT"],
+    debug=config["HTTP_DEBUG"]
+)

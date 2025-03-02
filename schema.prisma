@@ -4,12 +4,10 @@ datasource db {
 }
 
 model ping {
-  id            Int      @id @default(autoincrement())
-  users         BigInt   @default(0)
-  servers       Int      @default(0)
-  user_installs Int      @default(0)
-  avg_us        Int      @default(0)
-  ping_ws       Int      @default(0)
-  ping_rest     Int      @default(0)
-  created_at    DateTime @default(now())
+  id              Int      @id @default(autoincrement())
+  server_installs Int      @default(0)
+  user_installs   Int      @default(0)
+  ping_ws         Int      @default(0)
+  ping_rest       Int      @default(0)
+  created_at      DateTime @default(now())
 }
