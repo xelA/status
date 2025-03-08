@@ -198,5 +198,5 @@ class xelAAPI:
 
     def update_cache(self):
         self.cache_data = self.db.fetch(
-            "SELECT * FROM ping ORDER BY created_at DESC LIMIT 25"
+            "SELECT * FROM ping ORDER BY created_at DESC LIMIT 30"
         )

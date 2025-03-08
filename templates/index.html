@@ -19,10 +19,9 @@
         </div>
       </section>
 
-      <div class="box-container sun-flower-dropshadow no-border-radius black-text">
-        <h1 class="no-margin black-text">
-          Bot: Statistics
-          <span class="nice-flex">aka. flexing</span>
+      <div class="box-container secondary-dropshadow no-border-radius">
+        <h1 class="no-margin">
+          📜 Status breakdown
         </h1>
         <section class="flex-grid">
           {% for key, value in top_stats.items() %}
@@ -44,8 +43,9 @@
         </div>
       {% endif %}
 
-      <div class="box-container secondary-dropshadow no-border-radius">
-        <h1 class="no-margin">Ping: Discord API</h1>
+      <div class="box-container primary-dropshadow no-border-radius">
+        <h1 class="no-margin">📶 Ping status</h1>
+        <p class="no-margin"><i class="concrete-text">(Past 30 minutes)</i></p>
         <canvas id="ping_chart"></canvas>
         <script>
           chart_maker(
@@ -58,21 +58,43 @@
         </script>
       </div>
 
-      <p class="box-container emerald-dropshadow black-text no-margin">
-        Are you a nerd and want the <b>raw</b> JSON data of <b>{{ bot }}</b>?
-        Click <a href="/api/history" target="_blank" class="peter-river-text">here</a>.
-      </p>
+      <div class="box-container primary-dropshadow no-border-radius metric-explain">
+        <h1 class="no-margin">📖 Metric explanation</h1>
 
-      <p class="footer-note">
-        <span class="bold sun-flower-text">NOTE: </span>
-        With this website, you can ensure that the bot is running smoothly,
-        and check if your internet connection is <i>shit</i> or Discord is drunk yet again.
-      </p>
+        <h2 class="header">↔️ REST</h2>
+        <p class="description">
+            Measures the total round-trip time for <b>{{ bot }}</b> to send an HTTP request to the API and receive a response.
+            This metric reflects how quickly the bot can communicate with the API over standard web requests.
+        </p>
 
-      <p class="git-revision">
-        Git revision: <b><a href="https://github.com/xelA/Status/commit/{{ git_rev }}" target="_blank" class="sun-flower-text">{{ git_rev }}</a></b>
-        <i>({{ git_commit }})</i>
-      </p>
+        <h2 class="header">🔁 WebSocket</h2>
+        <p class="description">
+            Represents the real-time latency of the persistent WebSocket connection between <b>{{ bot }}</b> and the API.
+            Unlike REST, which sends separate requests, WebSocket maintains an open connection, making this metric useful for tracking stability and responsiveness, similar to in-game latency.
+        </p>
+
+        <h2 class="header">📶 Discord</h2>
+        <p class="description">
+            A latency metric provided by Discord itself, showing their estimate of the delay between <b>{{ bot }}</b> and their servers.
+            Since Discord has internal network insights, this serves as a useful reference point for comparison with the other metrics.
+        </p>
+      </div>
+
+      <div class="box-container no-margin">
+        <p class="footer-note no-margin">
+          <span class="bold sun-flower-text">NOTE: </span>
+          With this website, you can ensure that the bot is running smoothly,
+          and check if your internet connection is <i>shit</i> or Discord is drunk yet again.
+          Also... are you a nerd and want the <b>raw</b> JSON data of <b>{{ bot }}</b>?
+          Click <a href="/api/history" target="_blank" class="peter-river-text">here</a>.
+        </p>
+
+        <p class="git-revision">
+          Git revision: <b><a href="https://github.com/xelA/Status/commit/{{ git_rev }}" target="_blank" class="sun-flower-text">{{ git_rev }}</a></b>
+          <i>({{ git_commit }})</i>
+        </p>
+      </div>
+
 
     </div>
   </body>

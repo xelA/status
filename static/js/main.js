@@ -37,13 +37,24 @@ function chart_maker(name, labels, data, {beginAtZero=true} = {}) {
     type: 'line',
     data: { labels: timestamps, datasets: datasets },
     options: {
+      elements: {
+        point: {
+          radius: 1,
+          pointHitRadius: 5,
+        },
+        line: {
+          borderWidth: 5,
+          borderColor: "transparent"
+        }
+      },
       scales: {
         y: {
           ticks: { color: "#ccc" },
-          beginAtZero: beginAtZero
+          beginAtZero: beginAtZero,
         },
         x: {
-          ticks: { color: "#ccc" }
+          ticks: { display: false },
+          grid: { display: false }
         },
       }
     }
