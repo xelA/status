@@ -51,7 +51,8 @@
           chart_maker(
             'ping_chart', {{ lists.timestamps | safe }}, [
               { label: 'WebSocket', data: {{ lists.ws | safe }}, color: 'rgb(46, 204, 113)' },
-              { label: 'REST', data: {{ lists.rest | safe }}, color: 'rgb(241, 196, 15)' }
+              { label: 'REST', data: {{ lists.rest | safe }}, color: 'rgb(241, 196, 15)' },
+              { label: 'Discord', data: {{ lists.discord | safe }}, color: 'rgb(88, 101, 242)' }
             ]
           )
         </script>

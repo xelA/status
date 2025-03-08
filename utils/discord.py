@@ -7,15 +7,65 @@ from postgreslite import PoolConnection
 from utils import default
 
 
+class DiscordStatus:
+    def __init__(self):
+        # Default data
+        self.data_status = {
+            "status": {
+                "indicator": "none",
+                "description": ""
+            },
+            "page": {
+                "url": ""
+            }
+        }
+
+        self.data_metric = {}
+
+    @property
+    def last_ping(self) -> int:
+        data = self.data_metric.get("metrics", [{}])[0].get("data", [{}])[-1]
+        return data.get("value", 0)
+
+    @property
+    def is_unstable(self) -> dict | None:
+        if self.data_status.get("status", {}).get("indicator", "") == "none":
+            return None
+
+        return {
+            "indicator": self.data_status.get("status", {}).get("indicator", ""),
+            "description": self.data_status.get("status", {}).get("description", ""),
+            "page": self.data_status.get("page", {}).get("url", "")
+        }
+
+    async def fetch(self) -> dict:
+        async with aiohttp.ClientSession() as session:
+            try:
+                # Fetch downtime
+                async with session.get("https://discordstatus.com/api/v2/status.json") as r:
+                    self.data_status = await r.json()
+            except Exception as e:
+                print(e)
+
+            try:
+                # Fetch metrics
+                async with session.get("https://discordstatus.com/metrics-display/5k2rt9f7pmny/day.json") as r:
+                    self.data_metric = await r.json()
+            except Exception as e:
+                print(e)
+
 class xelAAPI:
     def __init__(self, *, db: PoolConnection, config: dict):
         self.db: PoolConnection = db
         self.config = config
 
+        self.discord = DiscordStatus()
+
         self._data: dict = {}
         self._last_fetch: datetime | None = None
 
         self.cache_seconds: int = config["XELA_CACHE_SECONDS"]
+
         self.cache_data: list[dict] = []
 
         self.update_cache()
@@ -29,6 +79,10 @@ class xelAAPI:
     @property
     def me(self) -> dict:
         return self._data.get("@me", {})
+
+    @property
+    def ping_discord(self) -> int:
+        return self.discord.last_ping
 
     @property
     def last_reboot(self) -> int:
@@ -118,6 +172,11 @@ class xelAAPI:
             self._data = new_fake_data
             del new_fake_data
 
+        try:
+            await self.discord.fetch()
+        except Exception as e:
+            print(e)
+
         self._last_fetch = default.utcnow()
 
         self.update_data()
@@ -126,12 +185,13 @@ class xelAAPI:
 
     def update_data(self):
         self.db.execute(
-            "INSERT INTO ping (server_installs, user_installs, ping_ws, ping_rest) "
-            "VALUES (?, ?, ?, ?)",
+            "INSERT INTO ping (server_installs, user_installs, ping_ws, ping_rest, ping_discord) "
+            "VALUES (?, ?, ?, ?, ?)",
             self.server_installs,
             self.user_installs,
             self.ping_ws,
-            self.ping_rest
+            self.ping_rest,
+            self.discord.last_ping
         )
 
         self.update_cache()

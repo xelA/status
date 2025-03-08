@@ -9,5 +9,6 @@ model ping {
   user_installs   Int      @default(0)
   ping_ws         Int      @default(0)
   ping_rest       Int      @default(0)
+  ping_discord    Int      @default(0)
   created_at      DateTime @default(now())
 }
