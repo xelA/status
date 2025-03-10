@@ -144,6 +144,31 @@ class xelAAPI:
             id=self.id, avatar=self.avatar, format="png", size=512
         )
 
+    def api_latest(self) -> dict:
+        """ API for the latest data. """
+        return {
+            "discord_status": self.discord.current_status(),
+            "ping_ws": self.ping_ws,
+            "ping_rest": self.ping_rest,
+            "ping_discord": self.ping_discord,
+            "server_installs": self.server_installs,
+            "user_installs": self.user_installs,
+        }
+
+    def api_history(self) -> list[dict]:
+        """ API for the history data. """
+        return [
+            {
+                "server_installs": g["server_installs"],
+                "user_installs": g["user_installs"],
+                "ping_ws": g["ping_ws"],
+                "ping_discord": g["ping_discord"],
+                "ping_rest": g["ping_rest"],
+                "created_at": g["created_at"],  # Ensure it's ISO format
+            }
+            for g in self.cache_data
+        ]
+
     async def _background_task(self):
         while True:
             await asyncio.sleep(5)

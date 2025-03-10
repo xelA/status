@@ -38,7 +38,7 @@
           <h1 class="no-margin">Discord Status: {{ discordstatus['description'] }}</h1>
           <p class="no-margin">
             This might affect how xelA performes, you can follow up on Discord's status
-            <a href="{{ discordstatus['url'] }}" target="_blank" class="sun-flower-text">here</a>.
+            <a href="{{ discordstatus['url'] }}" target="_blank">here</a>.
           </p>
         </div>
       {% endif %}
@@ -85,8 +85,11 @@
           <span class="bold sun-flower-text">NOTE: </span>
           With this website, you can ensure that the bot is running smoothly,
           and check if your internet connection is <i>shit</i> or Discord is drunk yet again.
+          <br><br>
           Also... are you a nerd and want the <b>raw</b> JSON data of <b>{{ bot }}</b>?
-          Click <a href="/api/history" target="_blank" class="peter-river-text">here</a>.
+          Click <a href="/api?show=latest" target="_blank" class="peter-river-text">here</a>.
+          Valid show arguments: <code>latest</code>, <code>history</code>. You use <code>, (comma)</code>
+          to separate multiple arguments.
         </p>
 
         <p class="git-revision">

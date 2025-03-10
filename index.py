@@ -6,7 +6,7 @@ from dotenvplus import DotEnv
 from typing import Union
 from datetime import datetime
 from postgreslite import PostgresLite
-from quart import Quart, render_template
+from quart import Quart, render_template, request
 
 from utils import discord
 
@@ -72,29 +72,28 @@ async def index():
     )
 
 
-@app.route("/api/history")
-async def index_json():
-    return {
-        "latest": {
-            "discord_status": xela.discord.current_status(),
-            "ping_ws": xela.ping_ws,
-            "ping_rest": xela.ping_rest,
-            "ping_discord": xela.ping_discord,
-            "server_installs": xela.server_installs,
-            "user_installs": xela.user_installs,
-        },
-        "history": [
-            {
-                "server_installs": g["server_installs"],
-                "user_installs": g["user_installs"],
-                "ping_ws": g["ping_ws"],
-                "ping_discord": g["ping_discord"],
-                "ping_rest": g["ping_rest"],
-                "created_at": g["created_at"],  # Ensure it's ISO format
-            }
-            for g in xela.cache_data
-        ],
-    }
+@app.route("/api")
+async def api_all():
+    """ Endpoint that returns the latest and history data. """
+    payload = {}
+
+    # Check the url parameters
+    show = request.args.get("show", "")
+
+    show_spesific = show.split(",")
+
+    if "latest" in show_spesific:
+        payload["latest"] = xela.api_latest()
+
+    if "history" in show_spesific:
+        payload["history"] = xela.api_history()
+
+    if not payload:
+        return {
+            "error": "No data to show, please select something...",
+        }, 400
+
+    return payload
 
 
 app.run(
