@@ -47,7 +47,7 @@ async def index():
     return await render_template(
         "index.html",
         bot=xela,
-        discordstatus=xela.discord.data_status,
+        discordstatus=xela.discord.current_status(),
         git_rev=git_rev,
         git_commit=git_commit,
         top_stats={
@@ -74,29 +74,27 @@ async def index():
 
 @app.route("/api/history")
 async def index_json():
-    payload = {
-        "current": {
+    return {
+        "latest": {
+            "discord_status": xela.discord.current_status(),
             "ping_ws": xela.ping_ws,
             "ping_rest": xela.ping_rest,
             "ping_discord": xela.ping_discord,
             "server_installs": xela.server_installs,
             "user_installs": xela.user_installs,
-        }
+        },
+        "history": [
+            {
+                "server_installs": g["server_installs"],
+                "user_installs": g["user_installs"],
+                "ping_ws": g["ping_ws"],
+                "ping_discord": g["ping_discord"],
+                "ping_rest": g["ping_rest"],
+                "created_at": g["created_at"],  # Ensure it's ISO format
+            }
+            for g in xela.cache_data
+        ],
     }
-
-    payload["history"] = []
-
-    for g in xela.cache_data:
-        payload["history"].append({
-            "server_installs": g["server_installs"],
-            "user_installs": g["user_installs"],
-            "ping_ws": g["ping_ws"],
-            "ping_discord": g["ping_discord"],
-            "ping_rest": g["ping_rest"],
-            "created_at": g["created_at"]
-        })
-
-    return payload
 
 
 app.run(

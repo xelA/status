@@ -33,12 +33,12 @@
         </section>
       </div>
 
-      {% if discordstatus['status']['indicator'] != "none" %}
+      {% if discordstatus['indicator'] != "none" %}
         <div class="box-container alizarin-dropshadow no-border-radius">
-          <h1 class="no-margin">Discord Status: {{ discordstatus['status']['description'] }}</h1>
+          <h1 class="no-margin">Discord Status: {{ discordstatus['description'] }}</h1>
           <p class="no-margin">
             This might affect how xelA performes, you can follow up on Discord's status
-            <a href="{{ discordstatus['page']['url'] }}" target="_blank" class="sun-flower-text">here</a>.
+            <a href="{{ discordstatus['url'] }}" target="_blank" class="sun-flower-text">here</a>.
           </p>
         </div>
       {% endif %}

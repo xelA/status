@@ -10,13 +10,13 @@ from utils import default
 class DiscordStatus:
     def __init__(self):
         # Default data
+        self._url = "https://discordstatus.com/"
+
         self.data_status = {
+            # The API template
             "status": {
                 "indicator": "none",
                 "description": ""
-            },
-            "page": {
-                "url": ""
             }
         }
 
@@ -27,15 +27,13 @@ class DiscordStatus:
         data = self.data_metric.get("metrics", [{}])[0].get("data", [{}])[-1]
         return data.get("value", 0)
 
-    @property
-    def is_unstable(self) -> dict | None:
-        if self.data_status.get("status", {}).get("indicator", "") == "none":
-            return None
+    def current_status(self) -> dict:
+        _status = self.data_status.get("status", {})
 
         return {
-            "indicator": self.data_status.get("status", {}).get("indicator", ""),
-            "description": self.data_status.get("status", {}).get("description", ""),
-            "page": self.data_status.get("page", {}).get("url", "")
+            "indicator": _status.get("indicator", "none"),
+            "description": _status.get("description", "Everything is fine (for now)"),
+            "url": self._url
         }
 
     async def fetch(self) -> dict:
