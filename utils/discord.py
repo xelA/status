@@ -153,6 +153,10 @@ class xelAAPI:
             "ping_discord": self.ping_discord,
             "server_installs": self.server_installs,
             "user_installs": self.user_installs,
+            "ram": self.ram,
+            "last_reboot": self.last_reboot,
+            "viewable_users": self.users,
+            "avg_users_server": self.avg_users_server,
         }
 
     def api_history(self) -> list[dict]:
