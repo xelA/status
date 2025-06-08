@@ -1,4 +1,0 @@
-quart
-aiohttp
-postgreslite
-dotenvplus

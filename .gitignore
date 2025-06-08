@@ -1,6 +1,7 @@
 # Custom
 *.db
 config.json
+uv.lock
 
 # Except
 !database/.exists

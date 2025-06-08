@@ -28,15 +28,15 @@ class DiscordStatus:
         return data.get("value", 0)
 
     def current_status(self) -> dict:
-        _status = self.data_status.get("status", {})
+        status = self.data_status.get("status", {})
 
         return {
-            "indicator": _status.get("indicator", "none"),
-            "description": _status.get("description", "Everything is fine (for now)"),
+            "indicator": status.get("indicator", "none"),
+            "description": status.get("description", "Everything is fine (for now)"),
             "url": self._url
         }
 
-    async def fetch(self) -> dict:
+    async def fetch(self) -> None:
         async with aiohttp.ClientSession() as session:
             try:
                 # Fetch downtime
@@ -51,6 +51,7 @@ class DiscordStatus:
                     self.data_metric = await r.json()
             except Exception as e:
                 print(e)
+
 
 class xelAAPI:
     def __init__(self, *, db: PoolConnection, config: dict):
@@ -179,7 +180,7 @@ class xelAAPI:
             await self.fetch_data()
 
     async def fetch_data(self) -> tuple[dict, bool]:
-        """ Fetch data from the bot API (False = cache, True = fetch) """
+        """ Fetch data from the bot API (False = cache, True = fetch). """
         if (
             self._last_fetch and
             default.utcnow() - self._last_fetch < timedelta(seconds=self.cache_seconds)
@@ -187,11 +188,10 @@ class xelAAPI:
             return (self._data, False)
 
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    f"http://127.0.0.1:{self.config['XELA_PORT']}/bot/stats"
-                ) as r:
-                    self._data = await r.json()
+            async with aiohttp.ClientSession() as session, session.get(
+                f"http://127.0.0.1:{self.config['XELA_PORT']}/bot/stats"
+            ) as r:
+                self._data = await r.json()
         except Exception as e:
             print(e)
             new_fake_data = self._data.copy()

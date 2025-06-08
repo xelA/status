@@ -3,7 +3,6 @@ import time
 import asyncio
 
 from dotenvplus import DotEnv
-from typing import Union
 from datetime import datetime
 from postgreslite import PostgresLite
 from quart import Quart, render_template, request
@@ -17,31 +16,44 @@ config = DotEnv(".env")
 app = Quart(__name__)
 
 db = PostgresLite("./storage.db").connect()
-xela = discord.xelAAPI(db=db, config=config)
+xela = discord.xelAAPI(db=db, config=config)  # type: ignore
 
 git_log = subprocess.getoutput('git log -1 --pretty=format:"%h %s" --abbrev-commit').split(" ")
 git_rev, git_commit = (git_log[0], " ".join(git_log[1:]))
 
 
 @app.before_serving
-async def startup():
+async def _startup():
     xela.update_cache()
-    loop.create_task(xela._background_task())
+    loop.create_task(xela._background_task())  # noqa: RUF006
 
 
-def unix_timestamp(timestamp: Union[str, datetime]) -> int:
+def unix_timestamp(timestamp: str | datetime) -> float | int:
+    """
+    Convert a timestamp to a unix timestamp.
+
+    Parameters
+    ----------
+    timestamp:
+        The timestamp to convert.
+
+    Returns
+    -------
+        The unix timestamp.
+    """
     if isinstance(timestamp, str):
         return time.mktime(
             datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").timetuple()
         )
-    elif isinstance(timestamp, datetime):
+
+    if isinstance(timestamp, datetime):
         return time.mktime(timestamp.timetuple())
-    else:
-        return timestamp
+
+    return timestamp
 
 
 @app.route("/")
-async def index():
+async def _index():
     reverse_database_xela_cache = xela.cache_data[::-1]
 
     return await render_template(
