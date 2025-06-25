@@ -140,6 +140,15 @@ class xelAAPI:
         return self.me.get("username", "NotFound")
 
     @property
+    def interactions(self) -> dict[str, float]:
+        data = self._data.get("interactions", {})
+        return {
+            "per_second": data.get("per_second", 0.0),
+            "per_minute": data.get("per_minute", 0.0),
+            "per_hour": data.get("per_hour", 0.0)
+        }
+
+    @property
     def avatar_url(self) -> str:
         return "https://cdn.discordapp.com/avatars/{id}/{avatar}.{format}?size={size}".format(
             id=self.id, avatar=self.avatar, format="png", size=512
@@ -158,6 +167,7 @@ class xelAAPI:
             "last_reboot": self.last_reboot,
             "viewable_users": self.users,
             "avg_users_server": self.avg_users_server,
+            "interactions": self.interactions
         }
 
     def api_history(self) -> list[dict]:
