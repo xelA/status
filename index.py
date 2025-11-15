@@ -59,7 +59,7 @@ async def _index():
     return await render_template(
         "index.html",
         bot=xela,
-        discordstatus=xela.discord.current_status(),
+        discordstatus=xela.discord.data_status,
         git_rev=git_rev,
         git_commit=git_commit,
         top_stats={

@@ -7,19 +7,66 @@ from postgreslite import PoolConnection
 from utils import default
 
 
-class DiscordStatus:
-    def __init__(self):
-        # Default data
-        self._url = "https://discordstatus.com/"
+class StatusIndicator:
+    def __init__(self, data: dict):
+        self.url = "https://discordstatus.com/"
 
-        self.data_status = {
-            # The API template
-            "status": {
-                "indicator": "none",
-                "description": ""
-            }
+        self.name: str | None = data.get("name")
+        self.status = data.get("status")
+        self.impact = data.get("impact")
+        self.description = data.get("description")
+
+    def has_issues(self) -> bool:
+        return self.status not in (None, "none", "operational")
+
+    def reset(self) -> None:
+        self.name = None
+        self.status = None
+        self.impact = None
+        self.description = None
+
+    def update(self, data: dict | str) -> None:
+        if not isinstance(data, dict):
+            return
+
+        incidents = data.get("incidents", [])
+        if not isinstance(incidents, list):
+            return
+
+        # No unresolved incidents reported
+        if not incidents:
+            self.reset()
+            return
+
+        latest_incident = incidents[0]
+        incident_updates = next(
+            (u for u in latest_incident.get("incident_updates", [])),
+            {}
+        )
+
+        self.name = latest_incident.get("name", "unknown")
+        self.status = latest_incident.get("status", "none")
+        self.impact = latest_incident.get("impact", "none")
+        self.description = incident_updates.get("body", "No description available.")
+
+    def to_dict(self) -> dict:
+        return {
+            "has_issues": self.has_issues(),
+            "name": self.name,
+            "status": self.status,
+            "impact": self.impact,
+            "description": self.description,
+            "url": self.url
         }
 
+    @classmethod
+    def none(cls):
+        return cls({})
+
+
+class DiscordStatus:
+    def __init__(self):
+        self.data_status = StatusIndicator.none()
         self.data_metric = {}
 
     @property
@@ -27,21 +74,12 @@ class DiscordStatus:
         data = self.data_metric.get("metrics", [{}])[0].get("data", [{}])[-1]
         return data.get("value", 0)
 
-    def current_status(self) -> dict:
-        status = self.data_status.get("status", {})
-
-        return {
-            "indicator": status.get("indicator", "none"),
-            "description": status.get("description", "Everything is fine (for now)"),
-            "url": self._url
-        }
-
     async def fetch(self) -> None:
         async with aiohttp.ClientSession() as session:
             try:
                 # Fetch downtime
-                async with session.get("https://discordstatus.com/api/v2/status.json") as r:
-                    self.data_status = await r.json()
+                async with session.get("https://discordstatus.com/api/v2/incidents/unresolved.json") as r:
+                    self.data_status.update(await r.json())
             except Exception as e:
                 print(e)
 
@@ -53,7 +91,7 @@ class DiscordStatus:
                 print(e)
 
 
-class xelAAPI:
+class xelAAPI:  # noqa: N801
     def __init__(self, *, db: PoolConnection, config: dict):
         self.db: PoolConnection = db
         self.config = config
@@ -157,7 +195,7 @@ class xelAAPI:
     def api_latest(self) -> dict:
         """ API for the latest data. """
         return {
-            "discord_status": self.discord.current_status(),
+            "discord_status": self.discord.data_status.to_dict(),
             "ping_ws": self.ping_ws,
             "ping_rest": self.ping_rest,
             "ping_discord": self.ping_discord,

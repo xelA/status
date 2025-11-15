@@ -33,13 +33,16 @@
         </section>
       </div>
 
-      {% if discordstatus['indicator'] != "none" %}
+      {% if discordstatus.has_issues() %}
         <div class="box-container alizarin-dropshadow no-border-radius">
-          <h1 class="no-margin">Discord Status: {{ discordstatus['description'] }}</h1>
+          <h1 class="no-margin">{{ discordstatus.name }}</h1>
           <p class="no-margin">
-            This might affect how xelA performes, you can follow up on Discord's status
-            <a href="{{ discordstatus['url'] }}" target="_blank">here</a>.
+            {{ discordstatus.status.title() }}: {{ discordstatus.description }}
           </p>
+          <div class="text-center status-warning-xela">
+            <span class="sun-flower-text">Note:</span> This might affect how xelA performs, you can follow up on Discord's status
+            <a href="{{ discordstatus.url }}" target="_blank">here</a>.
+          </div>
         </div>
       {% endif %}
 
