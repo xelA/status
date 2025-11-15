@@ -15,6 +15,8 @@ class StatusIndicator:
         self.status = data.get("status")
         self.impact = data.get("impact")
         self.description = data.get("description")
+        self.created_at = data.get("created_at")
+        self.updated_at = data.get("updated_at")
 
     def has_issues(self) -> bool:
         return self.status not in (None, "none", "operational")
@@ -24,6 +26,8 @@ class StatusIndicator:
         self.status = None
         self.impact = None
         self.description = None
+        self.created_at = None
+        self.updated_at = None
 
     def update(self, data: dict | str) -> None:
         if not isinstance(data, dict):
@@ -48,6 +52,8 @@ class StatusIndicator:
         self.status = latest_incident.get("status", "none")
         self.impact = latest_incident.get("impact", "none")
         self.description = incident_updates.get("body", "No description available.")
+        self.created_at = latest_incident.get("created_at")
+        self.updated_at = latest_incident.get("updated_at")
 
     def to_dict(self) -> dict:
         return {
@@ -56,7 +62,9 @@ class StatusIndicator:
             "status": self.status,
             "impact": self.impact,
             "description": self.description,
-            "url": self.url
+            "created_at": self.created_at,
+            "updated_at": self.updated_at,
+            "url": self.url,
         }
 
     @classmethod
