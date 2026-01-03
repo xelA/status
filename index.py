@@ -100,6 +100,9 @@ async def api_all():
     if "history" in show_spesific:
         payload["history"] = xela.api_history()
 
+    if "user" in show_spesific:
+        payload["user"] = xela.api_user()
+
     if not payload:
         return {
             "error": "No data to show, please select something...",

@@ -200,6 +200,16 @@ class xelAAPI:  # noqa: N801
             id=self.id, avatar=self.avatar, format="png", size=512
         )
 
+    def api_user(self) -> dict:
+        """ API for the bot user data. """
+        return {
+            "id": self.id,
+            "username": self.username,
+            "discriminator": self.discriminator or None,
+            "avatar": self.avatar,
+            "avatar_url": self.avatar_url,
+        }
+
     def api_latest(self) -> dict:
         """ API for the latest data. """
         return {
