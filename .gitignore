@@ -2,6 +2,7 @@
 *.db
 config.json
 uv.lock
+.vscode
 
 # Except
 !database/.exists
