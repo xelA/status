@@ -65,7 +65,7 @@ async def _index():
         top_stats={
             "WebSocket Ping": f"{xela.ping_ws:,} ms",
             "REST Ping": f"{xela.ping_rest:,} ms",
-            "RAM Usage": f"{xela.ram:,} MB",
+            "RAM Usage": xela.ram,
             "Server Installs": f"{xela.server_installs:,}",
             "User Installs": f"{xela.user_installs:,}",
             "DB Entries": f"{xela.database:,}",
