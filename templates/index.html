@@ -49,15 +49,32 @@
       <div class="box-container primary-dropshadow no-border-radius">
         <h1 class="no-margin">📶 Ping status</h1>
         <p class="no-margin"><i class="concrete-text">(Past 30 minutes)</i></p>
-        <canvas id="ping_chart"></canvas>
-        <script>
-          chart_maker(
-            'ping_chart', {{ lists.timestamps | safe }}, [
-              { label: 'WebSocket', data: {{ lists.ws | safe }}, color: 'rgb(46, 204, 113)' },
-              { label: 'REST', data: {{ lists.rest | safe }}, color: 'rgb(241, 196, 15)' }
-            ]
-          )
-        </script>
+        <div style="position: relative; height: 300px; width: 100%;">
+          <canvas id="ping_chart"></canvas>
+          <script>
+            chart_maker(
+              'ping_chart', {{ lists.timestamps | safe }}, [
+                { label: 'WebSocket', data: {{ lists.ws | safe }}, color: 'rgb(46, 204, 113)' },
+                { label: 'REST', data: {{ lists.rest | safe }}, color: 'rgb(241, 196, 15)' }
+              ]
+            )
+          </script>
+        </div>
+      </div>
+
+      <div class="box-container primary-dropshadow no-border-radius">
+        <h1 class="no-margin">💾 RAM Usage</h1>
+        <p class="no-margin"><i class="concrete-text">(Past 30 minutes)</i></p>
+        <div style="position: relative; height: 200px; width: 100%;">
+          <canvas id="ram_chart"></canvas>
+          <script>
+            chart_maker(
+              'ram_chart', {{ lists.timestamps | safe }}, [
+                { label: 'RAM Usage', data: {{ lists.ram | safe }}, color: 'rgb(26, 188, 156)' }
+              ]
+            )
+          </script>
+        </div>
       </div>
 
       <div class="box-container primary-dropshadow no-border-radius metric-explain">

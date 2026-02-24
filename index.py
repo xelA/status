@@ -65,16 +65,17 @@ async def _index():
         top_stats={
             "WebSocket Ping": f"{xela.ping_ws:,} ms",
             "REST Ping": f"{xela.ping_rest:,} ms",
-            "RAM Usage": xela.ram,
+            "RAM Usage": f"{xela.ram:,} MB",
+            "Viewable users": f"{xela.users:,}",
             "Server Installs": f"{xela.server_installs:,}",
             "User Installs": f"{xela.user_installs:,}",
-            "DB Entries": f"{xela.database:,}",
         },
         data=xela.cache_data,
         data_count=len(xela.cache_data),
         lists={
             "ws": [g["ping_ws"] for g in reverse_database_xela_cache],
             "rest": [g["ping_rest"] for g in reverse_database_xela_cache],
+            "ram": [g["ram_usage"] for g in reverse_database_xela_cache],
             "timestamps": [
                 unix_timestamp(g["created_at"])
                 for g in reverse_database_xela_cache

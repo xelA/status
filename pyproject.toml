@@ -9,8 +9,9 @@ dependencies = [
     "quart>=0.20.0",
 ]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
+    "prisma==0.15.0",
     "pyright>=1.1.401",
     "ruff>=0.11.13",
 ]

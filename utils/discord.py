@@ -117,12 +117,8 @@ class xelAAPI:  # noqa: N801
         return self._data.get("last_reboot", 0)
 
     @property
-    def ram(self) -> str:
-        return self._data.get("ram", "0 MB")
-
-    @property
-    def database(self) -> int:
-        return self._data.get("database", 0)
+    def ram(self) -> float:
+        return self._data.get("ram", 0.0)
 
     @property
     def server_installs(self) -> int:
@@ -259,12 +255,13 @@ class xelAAPI:  # noqa: N801
 
     def update_data(self):
         self.db.execute(
-            "INSERT INTO ping (server_installs, user_installs, ping_ws, ping_rest) "
-            "VALUES (?, ?, ?, ?)",
+            "INSERT INTO ping (server_installs, user_installs, ping_ws, ping_rest, ram_usage) "
+            "VALUES (?, ?, ?, ?, ?)",
             self.server_installs,
             self.user_installs,
             self.ping_ws,
             self.ping_rest,
+            self.ram,
         )
 
         self.update_cache()

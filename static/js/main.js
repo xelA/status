@@ -37,6 +37,7 @@ function chart_maker(name, labels, data, {beginAtZero=true} = {}) {
     type: 'line',
     data: { labels: timestamps, datasets: datasets },
     options: {
+      maintainAspectRatio: false,
       elements: {
         point: {
           radius: 1,
