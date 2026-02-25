@@ -17,7 +17,7 @@ function unix_to_timestamp(unix) {
   return converted_date
 }
 
-function chart_maker(name, labels, data, {beginAtZero=true} = {}) {
+function chart_maker(name, labels, data = {}) {
   const ctx = document.getElementById(name).getContext('2d')
   let datasets = []
   let timestamps = []
@@ -51,7 +51,7 @@ function chart_maker(name, labels, data, {beginAtZero=true} = {}) {
       scales: {
         y: {
           ticks: { color: "#ccc" },
-          beginAtZero: beginAtZero,
+          beginAtZero: false,
         },
         x: {
           ticks: { display: false },
