@@ -48,9 +48,14 @@ class StatusIndicator:
             {}
         )
 
+        impact = latest_incident.get("impact", "none")
+        if impact == "none":
+            self.reset()
+            return
+
         self.name = latest_incident.get("name", "unknown")
+        self.impact = impact
         self.status = latest_incident.get("status", "none")
-        self.impact = latest_incident.get("impact", "none")
         self.description = incident_updates.get("body", "No description available.")
         self.created_at = latest_incident.get("created_at")
         self.updated_at = latest_incident.get("updated_at")
