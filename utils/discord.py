@@ -80,6 +80,12 @@ class StatusIndicator:
 class DiscordStatus:
     def __init__(self):
         self.data_status = StatusIndicator.none()
+        self.data_metric = {}
+
+    @property
+    def last_ping(self) -> int:
+        data = self.data_metric.get("metrics", [{}])[0].get("data", [{}])[-1]
+        return data.get("value", 0)
 
     async def fetch(self) -> None:
         async with aiohttp.ClientSession() as session:
@@ -87,6 +93,13 @@ class DiscordStatus:
                 # Fetch downtime
                 async with session.get("https://discordstatus.com/api/v2/incidents/unresolved.json") as r:
                     self.data_status.update(await r.json())
+            except Exception as e:
+                print(e)
+
+            try:
+                # Fetch metrics
+                async with session.get("https://discordstatus.com/metrics-display/5k2rt9f7pmny/day.json") as r:
+                    self.data_metric = await r.json()
             except Exception as e:
                 print(e)
 
@@ -146,6 +159,10 @@ class xelAAPI:  # noqa: N801
         return self._data.get("ping", {})
 
     @property
+    def ping_discord(self) -> int:
+        return self.discord.last_ping
+
+    @property
     def ping_ws(self) -> int:
         return self.ping.get("ws", 0)
 
@@ -200,6 +217,7 @@ class xelAAPI:  # noqa: N801
             "discord_status": self.discord.data_status.to_dict(),
             "ping_ws": self.ping_ws,
             "ping_rest": self.ping_rest,
+            "ping_discord": self.ping_discord,
             "server_installs": self.server_installs,
             "user_installs": self.user_installs,
             "ram": self.ram,
@@ -217,6 +235,8 @@ class xelAAPI:  # noqa: N801
                 "user_installs": g["user_installs"],
                 "ping_ws": g["ping_ws"],
                 "ping_rest": g["ping_rest"],
+                "ping_discord": g["ping_discord"],
+                "ram_usage": g["ram_usage"],
                 "created_at": g["created_at"],  # Ensure it's ISO format
             }
             for g in self.cache_data
@@ -260,12 +280,13 @@ class xelAAPI:  # noqa: N801
 
     def update_data(self):
         self.db.execute(
-            "INSERT INTO ping (server_installs, user_installs, ping_ws, ping_rest, ram_usage) "
-            "VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO ping (server_installs, user_installs, ping_ws, ping_rest, ping_discord, ram_usage) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
             self.server_installs,
             self.user_installs,
             self.ping_ws,
             self.ping_rest,
+            self.ping_discord,
             self.ram,
         )
 

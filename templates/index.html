@@ -55,7 +55,8 @@
             chart_maker(
               'ping_chart', {{ lists.timestamps | safe }}, [
                 { label: 'WebSocket', data: {{ lists.ws | safe }}, color: 'rgb(46, 204, 113)' },
-                { label: 'REST', data: {{ lists.rest | safe }}, color: 'rgb(241, 196, 15)' }
+                { label: 'REST', data: {{ lists.rest | safe }}, color: 'rgb(241, 196, 15)' },
+                { label: 'Discord', data: {{ lists.discord | safe }}, color: 'rgb(88, 101, 242)' }
               ]
             )
           </script>
@@ -90,6 +91,12 @@
         <p class="description">
             Represents the real-time latency of the persistent WebSocket connection between <b>{{ bot }}</b> and the API.
             Unlike REST, which sends separate requests, WebSocket maintains an open connection, making this metric useful for tracking stability and responsiveness, similar to in-game latency.
+        </p>
+
+        <h2 class="header">📶 Discord</h2>
+        <p class="description">
+            A latency metric provided by Discord itself, showing their estimate of the delay between <b>{{ bot }}</b> and their servers.
+            Since Discord has internal network insights, this serves as a useful reference point for comparison with the other metrics.
         </p>
       </div>
 

@@ -65,7 +65,7 @@ async def _index():
         top_stats={
             "WebSocket Ping": f"{xela.ping_ws:,} ms",
             "REST Ping": f"{xela.ping_rest:,} ms",
-            "RAM Usage": f"{xela.ram:,} MB",
+            "Discord Ping": f"{xela.ping_discord:,} ms",
             "Viewable users": f"{xela.users:,}",
             "Server Installs": f"{xela.server_installs:,}",
             "User Installs": f"{xela.user_installs:,}",
@@ -75,6 +75,7 @@ async def _index():
         lists={
             "ws": [g["ping_ws"] for g in reverse_database_xela_cache],
             "rest": [g["ping_rest"] for g in reverse_database_xela_cache],
+            "discord": [g["ping_discord"] for g in reverse_database_xela_cache],
             "ram": [g["ram_usage"] for g in reverse_database_xela_cache],
             "timestamps": [
                 unix_timestamp(g["created_at"])
@@ -91,7 +92,6 @@ async def api_all():
 
     # Check the url parameters
     show = request.args.get("show", "")
-
     show_spesific = show.split(",")
 
     if "latest" in show_spesific:
