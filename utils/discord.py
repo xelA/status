@@ -135,10 +135,6 @@ class xelAAPI:  # noqa: N801
         return self._data.get("last_reboot", 0)
 
     @property
-    def ram(self) -> float:
-        return self._data.get("ram", 0.0)
-
-    @property
     def server_installs(self) -> int:
         return self._data.get("server_installs", 0)
 
@@ -220,7 +216,6 @@ class xelAAPI:  # noqa: N801
             "ping_discord": self.ping_discord,
             "server_installs": self.server_installs,
             "user_installs": self.user_installs,
-            "ram": self.ram,
             "last_reboot": self.last_reboot,
             "viewable_users": self.users,
             "avg_users_server": self.avg_users_server,
@@ -236,7 +231,6 @@ class xelAAPI:  # noqa: N801
                 "ping_ws": g["ping_ws"],
                 "ping_rest": g["ping_rest"],
                 "ping_discord": g["ping_discord"],
-                "ram_usage": g["ram_usage"],
                 "created_at": g["created_at"],  # Ensure it's ISO format
             }
             for g in self.cache_data
@@ -280,14 +274,13 @@ class xelAAPI:  # noqa: N801
 
     def update_data(self):
         self.db.execute(
-            "INSERT INTO ping (server_installs, user_installs, ping_ws, ping_rest, ping_discord, ram_usage) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
+            "INSERT INTO ping (server_installs, user_installs, ping_ws, ping_rest, ping_discord) "
+            "VALUES (?, ?, ?, ?, ?)",
             self.server_installs,
             self.user_installs,
             self.ping_ws,
             self.ping_rest,
             self.ping_discord,
-            self.ram,
         )
 
         self.update_cache()

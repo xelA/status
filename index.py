@@ -76,7 +76,6 @@ async def _index():
             "ws": [g["ping_ws"] for g in reverse_database_xela_cache],
             "rest": [g["ping_rest"] for g in reverse_database_xela_cache],
             "discord": [g["ping_discord"] for g in reverse_database_xela_cache],
-            "ram": [g["ram_usage"] for g in reverse_database_xela_cache],
             "timestamps": [
                 unix_timestamp(g["created_at"])
                 for g in reverse_database_xela_cache
