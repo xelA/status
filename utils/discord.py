@@ -251,7 +251,10 @@ class xelAAPI:  # noqa: N801
 
         try:
             async with aiohttp.ClientSession() as session, session.get(
-                f"http://127.0.0.1:{self.config['XELA_PORT']}/bot/stats"
+                f"http://127.0.0.1:{self.config['XELA_PORT']}/bot/stats",
+                headers={
+                    "X-API-Key": self.config["XELA_API_KEY"]
+                }
             ) as r:
                 self._data = await r.json()
         except Exception as e:
