@@ -70,7 +70,7 @@ class StatusIndicator:
             "status": self.status,
             "impact": self.impact,
             "description": self.description,
-            "created_at": self.created_at,
+            "created_at": str(self.created_at),
             "updated_at": self.updated_at,
             "url": self.url,
         }
@@ -235,7 +235,7 @@ class xelAAPI:  # noqa: N801
                 "ping_ws": g["ping_ws"],
                 "ping_rest": g["ping_rest"],
                 "ping_discord": g["ping_discord"],
-                "created_at": g["created_at"],  # Ensure it's ISO format
+                "created_at": str(g["created_at"]),  # Ensure it's ISO format
             }
             for g in self.cache_data
         ]
