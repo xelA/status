@@ -1,10 +1,13 @@
 import aiohttp
 import asyncio
+import logging
 
 from datetime import datetime, timedelta
 from postgreslite import PoolConnection
 
 from utils import default
+
+_log = logging.getLogger("xela_status")
 
 
 class StatusIndicator:
@@ -94,14 +97,14 @@ class DiscordStatus:
                 async with session.get("https://discordstatus.com/api/v2/incidents/unresolved.json") as r:
                     self.data_status.update(await r.json())
             except Exception as e:
-                print(e)
+                _log.error("Failed to fetch discord status incidents", exc_info=e)
 
             try:
                 # Fetch metrics
                 async with session.get("https://discordstatus.com/metrics-display/5k2rt9f7pmny/day.json") as r:
                     self.data_metric = await r.json()
             except Exception as e:
-                print(e)
+                _log.error("Failed to fetch discord status metrics", exc_info=e)
 
 
 class xelAAPI:  # noqa: N801
@@ -117,6 +120,7 @@ class xelAAPI:  # noqa: N801
         self.cache_seconds: int = config["XELA_CACHE_SECONDS"]
 
         self.cache_data: list[dict] = []
+        self.daily_cache_data: list[dict] = []
 
         self.update_cache()
 
@@ -236,6 +240,18 @@ class xelAAPI:  # noqa: N801
             for g in self.cache_data
         ]
 
+    def api_daily(self) -> list[dict]:
+        """ API for the daily average data (past 30 days). """
+        return [
+            {
+                "day": g["day"],
+                "avg_ping_ws": round(g["avg_ws"]),
+                "avg_ping_rest": round(g["avg_rest"]),
+                "avg_ping_discord": round(g["avg_discord"]),
+            }
+            for g in self.daily_cache_data
+        ]
+
     async def _background_task(self):
         while True:
             await asyncio.sleep(5)
@@ -258,7 +274,7 @@ class xelAAPI:  # noqa: N801
             ) as r:
                 self._data = await r.json()
         except Exception as e:
-            print(e)
+            _log.error("Failed to fetch internal API data", exc_info=e)
             new_fake_data = self._data.copy()
             new_fake_data["ping"] = {"type": "ms", "ws": 0, "rest": 0}
             self._data = new_fake_data
@@ -267,7 +283,7 @@ class xelAAPI:  # noqa: N801
         try:
             await self.discord.fetch()
         except Exception as e:
-            print(e)
+            _log.error("Discord fetching failed", exc_info=e)
 
         self._last_fetch = default.utcnow()
 
@@ -291,4 +307,9 @@ class xelAAPI:  # noqa: N801
     def update_cache(self):
         self.cache_data = self.db.fetch(
             "SELECT * FROM ping ORDER BY created_at DESC LIMIT 30"
+        )
+        self.daily_cache_data = self.db.fetch(
+            "SELECT DATE(created_at) as day, AVG(ping_ws) as avg_ws, "
+            "AVG(ping_rest) as avg_rest, AVG(ping_discord) as avg_discord "
+            "FROM ping GROUP BY DATE(created_at) ORDER BY day DESC LIMIT 30"
         )

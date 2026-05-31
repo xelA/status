@@ -17,7 +17,7 @@ function unix_to_timestamp(unix) {
   return converted_date
 }
 
-function chart_maker(name, labels, data = {}) {
+function chart_maker(name, labels, data = {}, raw_labels = false) {
   const ctx = document.getElementById(name).getContext('2d')
   let datasets = []
   let timestamps = []
@@ -29,9 +29,13 @@ function chart_maker(name, labels, data = {}) {
     })
   })
 
-  labels.forEach(e => {
-    timestamps.push(unix_to_timestamp(e))
-  })
+  if (raw_labels) {
+    timestamps = labels
+  } else {
+    labels.forEach(e => {
+      timestamps.push(unix_to_timestamp(e))
+    })
+  }
 
   const lines_go_brrr = new Chart(ctx, {
     type: 'line',
@@ -54,7 +58,7 @@ function chart_maker(name, labels, data = {}) {
           beginAtZero: false,
         },
         x: {
-          ticks: { display: false },
+          ticks: { display: raw_labels, color: "#ccc" },
           grid: { display: false }
         },
       }

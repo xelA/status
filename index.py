@@ -1,19 +1,18 @@
-import subprocess
-import time
 import asyncio
+import logging
+import subprocess
 
+from aiohttp import web
 from dotenvplus import DotEnv
-from datetime import datetime
+
 from postgreslite import PostgresLite
-from quart import Quart, render_template, request
 
-from utils import discord
+from utils import discord, default
 
-loop = asyncio.new_event_loop()
-asyncio.set_event_loop(loop)
+default.setup_logging()
+_log = logging.getLogger("xela_status")
 
 config = DotEnv(".env")
-app = Quart(__name__)
 
 db = PostgresLite("./storage.db").connect()
 xela = discord.xelAAPI(db=db, config=config)  # type: ignore
@@ -22,41 +21,10 @@ git_log = subprocess.getoutput('git log -1 --pretty=format:"%h %s" --abbrev-comm
 git_rev, git_commit = (git_log[0], " ".join(git_log[1:]))
 
 
-@app.before_serving
-async def _startup():
-    xela.update_cache()
-    loop.create_task(xela._background_task())  # noqa: RUF006
-
-
-def unix_timestamp(timestamp: str | datetime) -> float | int:
-    """
-    Convert a timestamp to a unix timestamp.
-
-    Parameters
-    ----------
-    timestamp:
-        The timestamp to convert.
-
-    Returns
-    -------
-        The unix timestamp.
-    """
-    if isinstance(timestamp, str):
-        return time.mktime(
-            datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S").timetuple()
-        )
-
-    if isinstance(timestamp, datetime):
-        return time.mktime(timestamp.timetuple())
-
-    return timestamp
-
-
-@app.route("/")
-async def _index():
+async def _index(_request: web.Request) -> web.Response:
     reverse_database_xela_cache = xela.cache_data[::-1]
 
-    return await render_template(
+    return default.html_response(
         "index.html",
         bot=xela,
         discordstatus=xela.discord.data_status,
@@ -77,42 +45,70 @@ async def _index():
             "rest": [g["ping_rest"] for g in reverse_database_xela_cache],
             "discord": [g["ping_discord"] for g in reverse_database_xela_cache],
             "timestamps": [
-                unix_timestamp(g["created_at"])
+                default.unix_timestamp(g["created_at"])
                 for g in reverse_database_xela_cache
             ],
+        },
+        daily_lists={
+            "ws": [round(g["avg_ws"]) for g in reversed(xela.daily_cache_data)],
+            "rest": [round(g["avg_rest"]) for g in reversed(xela.daily_cache_data)],
+            "discord": [round(g["avg_discord"]) for g in reversed(xela.daily_cache_data)],
+            "days": [g["day"] for g in reversed(xela.daily_cache_data)],
         }
     )
 
 
-@app.route("/api")
-async def api_all():
+async def _api(request: web.Request) -> web.Response:
     """ Endpoint that returns the latest and history data. """
     payload = {}
 
-    # Check the url parameters
-    show = request.args.get("show", "")
-    show_spesific = show.split(",")
+    show = request.rel_url.query.get("show", "")
+    show_specific = show.split(",")
 
-    if "latest" in show_spesific:
+    if "latest" in show_specific:
         payload["latest"] = xela.api_latest()
 
-    if "history" in show_spesific:
+    if "history" in show_specific:
         payload["history"] = xela.api_history()
 
-    if "user" in show_spesific:
+    if "user" in show_specific:
         payload["user"] = xela.api_user()
 
+    if "daily" in show_specific:
+        payload["daily"] = xela.api_daily()
+
     if not payload:
-        return {
-            "error": "No data to show, please select something...",
-        }, 400
+        return default.json_response(
+            {"error": "No data to show, please select something..."},
+            status=400
+        )
 
-    return payload
+    return default.json_response(payload)
 
 
-app.run(
+@web.middleware
+async def _log_requests(request: web.Request, handler) -> web.Response:
+    response = await handler(request)
+    _log.info(f"{request.method} {request.path} ({response.status})")
+    return response
+
+
+async def _background_ctx(_app: web.Application):
+    xela.update_cache()
+    task = asyncio.create_task(xela._background_task())
+    yield
+    task.cancel()
+    await asyncio.gather(task, return_exceptions=True)
+
+
+app = web.Application(middlewares=[_log_requests])
+app.router.add_get("/", _index)
+app.router.add_get("/api", _api)
+app.router.add_static("/static", "static")
+app.cleanup_ctx.append(_background_ctx)
+
+web.run_app(
+    app,
     host=config["HTTP_HOST"],
-    port=config["HTTP_PORT"],
-    debug=config["HTTP_DEBUG"],
-    loop=loop
+    port=int(config["HTTP_PORT"]),
 )
