@@ -7,6 +7,7 @@ model ping {
   id              Int      @id @default(autoincrement())
   server_installs Int      @default(0)
   user_installs   Int      @default(0)
+  users           BigInt   @default(0)
   ping_ws         Int      @default(0)
   ping_rest       Int      @default(0)
   ping_discord    Int      @default(0)

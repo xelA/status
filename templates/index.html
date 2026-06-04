@@ -19,20 +19,6 @@
         </div>
       </section>
 
-      <div class="box-container secondary-dropshadow no-border-radius">
-        <h1 class="no-margin">
-          📜 Status breakdown
-        </h1>
-        <section class="flex-grid">
-          {% for key, value in top_stats.items() %}
-          <div class="col-xs-4">
-            <p class="stats-key">{{ key }}</p>
-            <p class="stats-value">{{ value }}</p>
-          </div>
-          {% endfor %}
-        </section>
-      </div>
-
       {% if discordstatus.has_issues() %}
         <div class="box-container alizarin-dropshadow no-border-radius">
           <h1 class="no-margin">{{ discordstatus.impact.title() }} / {{ discordstatus.name }}</h1>
@@ -77,6 +63,32 @@
               ], true
             )
           </script>
+        </div>
+      </div>
+
+      <div class="breakdown-grid">
+        <div class="box-container secondary-dropshadow no-border-radius breakdown-panel">
+          <h1 class="no-margin">📊 Installs</h1>
+          <div style="position: relative; height: 200px; width: 100%;">
+            <canvas id="installs_chart"></canvas>
+            <script>
+              doughnut_maker('installs_chart', {{ bot.server_installs }}, {{ bot.user_installs }})
+            </script>
+          </div>
+        </div>
+        <div class="box-container secondary-dropshadow no-border-radius breakdown-panel">
+          <h1 class="no-margin">👥 Users</h1>
+          <p class="no-margin"><i class="concrete-text">(Past 30 minutes)</i></p>
+          <div style="position: relative; height: 200px; width: 100%;">
+            <canvas id="users_chart"></canvas>
+            <script>
+              chart_maker(
+                'users_chart', {{ lists.timestamps | safe }}, [
+                  { label: 'Users', data: {{ lists.users | safe }}, color: 'rgb(231, 76, 60)' }
+                ]
+              )
+            </script>
+          </div>
         </div>
       </div>
 

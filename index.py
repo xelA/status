@@ -15,6 +15,11 @@ _log = logging.getLogger("xela_status")
 config = DotEnv(".env")
 
 db = PostgresLite("./storage.db").connect()
+
+columns = db.fetch("PRAGMA table_info(ping)")
+if not any(col["name"] == "users" for col in columns):
+    db.execute("ALTER TABLE ping ADD COLUMN users BIGINT DEFAULT 0")
+
 xela = discord.xelAAPI(db=db, config=config)  # type: ignore
 
 git_log = subprocess.getoutput('git log -1 --pretty=format:"%h %s" --abbrev-commit').split(" ")
@@ -30,20 +35,13 @@ async def _index(_request: web.Request) -> web.Response:
         discordstatus=xela.discord.data_status,
         git_rev=git_rev,
         git_commit=git_commit,
-        top_stats={
-            "WebSocket Ping": f"{xela.ping_ws:,} ms",
-            "REST Ping": f"{xela.ping_rest:,} ms",
-            "Discord Ping": f"{xela.ping_discord:,} ms",
-            "Viewable users": f"{xela.users:,}",
-            "Server Installs": f"{xela.server_installs:,}",
-            "User Installs": f"{xela.user_installs:,}",
-        },
         data=xela.cache_data,
         data_count=len(xela.cache_data),
         lists={
             "ws": [g["ping_ws"] for g in reverse_database_xela_cache],
             "rest": [g["ping_rest"] for g in reverse_database_xela_cache],
             "discord": [g["ping_discord"] for g in reverse_database_xela_cache],
+            "users": [g.get("users", 0) for g in reverse_database_xela_cache],
             "timestamps": [
                 default.unix_timestamp(g["created_at"])
                 for g in reverse_database_xela_cache

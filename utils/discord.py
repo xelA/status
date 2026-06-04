@@ -293,10 +293,11 @@ class xelAAPI:  # noqa: N801
 
     def update_data(self):
         self.db.execute(
-            "INSERT INTO ping (server_installs, user_installs, ping_ws, ping_rest, ping_discord) "
-            "VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO ping (server_installs, user_installs, users, ping_ws, ping_rest, ping_discord) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
             self.server_installs,
             self.user_installs,
+            self.users,
             self.ping_ws,
             self.ping_rest,
             self.ping_discord,
