@@ -36,6 +36,7 @@ async def _index(_request: web.Request) -> web.Response:
         git_rev=git_rev,
         git_commit=git_commit,
         data=xela.cache_data,
+        viewable_users=f"{xela.users:,}",
         data_count=len(xela.cache_data),
         lists={
             "ws": [g["ping_ws"] for g in reverse_database_xela_cache],
