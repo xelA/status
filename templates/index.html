@@ -11,6 +11,11 @@
         <img draggable="false" src="{{ bot.avatar_url }}" class="image-title">
         <div class="unset">
           <h1 class="title">{{ bot }}</h1>
+          <div class="stat-highlights">
+            <span class="chip peter-river-bg">{{ server_installs }} server installs</span>
+            <span class="chip blurple-bg">{{ user_installs }} user installs</span>
+            <span class="chip emerald-bg">{{ viewable_users }} viewable users</span>
+          </div>
           <p class="undertitle italic">Last reboot: <span id="last_reboot"></span></p>
           <script>
             const lr = document.getElementById("last_reboot")
@@ -63,32 +68,6 @@
               ], true
             )
           </script>
-        </div>
-      </div>
-
-      <div class="breakdown-grid">
-        <div class="box-container secondary-dropshadow no-border-radius breakdown-panel">
-          <h1 class="no-margin">📊 Installs</h1>
-          <div style="position: relative; height: 200px; width: 100%;">
-            <canvas id="installs_chart"></canvas>
-            <script>
-              doughnut_maker('installs_chart', {{ bot.server_installs }}, {{ bot.user_installs }})
-            </script>
-          </div>
-        </div>
-        <div class="box-container secondary-dropshadow no-border-radius breakdown-panel">
-          <h1 class="no-margin">👥 Users</h1>
-          <p class="no-margin"><i class="concrete-text">Current: {{viewable_users}}</i></p>
-          <div style="position: relative; height: 200px; width: 100%;">
-            <canvas id="users_chart"></canvas>
-            <script>
-              chart_maker(
-                'users_chart', {{ lists.timestamps | safe }}, [
-                  { label: 'Users', data: {{ lists.users | safe }}, color: 'rgb(231, 76, 60)' }
-                ]
-              )
-            </script>
-          </div>
         </div>
       </div>
 

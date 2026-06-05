@@ -36,13 +36,14 @@ async def _index(_request: web.Request) -> web.Response:
         git_rev=git_rev,
         git_commit=git_commit,
         data=xela.cache_data,
+        server_installs=f"{xela.server_installs:,}",
+        user_installs=f"{xela.user_installs:,}",
         viewable_users=f"{xela.users:,}",
         data_count=len(xela.cache_data),
         lists={
             "ws": [g["ping_ws"] for g in reverse_database_xela_cache],
             "rest": [g["ping_rest"] for g in reverse_database_xela_cache],
             "discord": [g["ping_discord"] for g in reverse_database_xela_cache],
-            "users": [g.get("users", 0) for g in reverse_database_xela_cache],
             "timestamps": [
                 default.unix_timestamp(g["created_at"])
                 for g in reverse_database_xela_cache
@@ -106,8 +107,21 @@ app.router.add_get("/api", _api)
 app.router.add_static("/static", "static")
 app.cleanup_ctx.append(_background_ctx)
 
-web.run_app(
-    app,
-    host=config["HTTP_HOST"],
-    port=int(config["HTTP_PORT"]),
-)
+
+async def main():
+    """ I only wrapped it in this to make CTRL+C better... """
+    runner = web.AppRunner(app, shutdown_timeout=3.0)
+    await runner.setup()
+    site = web.TCPSite(runner, config["HTTP_HOST"], int(config["HTTP_PORT"]))
+    await site.start()
+    _log.info(f"Running on http://{config['HTTP_HOST']}:{config['HTTP_PORT']}")
+    try:
+        await asyncio.Event().wait()
+    finally:
+        await runner.cleanup()
+
+
+try:
+    asyncio.run(main())
+except KeyboardInterrupt:
+    pass

@@ -17,28 +17,6 @@ function unix_to_timestamp(unix) {
   return converted_date
 }
 
-function doughnut_maker(name, server_installs, user_installs) {
-  const ctx = document.getElementById(name).getContext('2d')
-  new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Server Installs', 'User Installs'],
-      datasets: [{
-        data: [server_installs, user_installs],
-        backgroundColor: ['rgb(46, 204, 113)', 'rgb(88, 101, 242)'],
-        borderWidth: 0
-      }]
-    },
-    options: {
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          labels: { color: '#ccc' }
-        }
-      }
-    }
-  })
-}
 
 function chart_maker(name, labels, data = {}, raw_labels = false) {
   const ctx = document.getElementById(name).getContext('2d')
@@ -60,30 +38,18 @@ function chart_maker(name, labels, data = {}, raw_labels = false) {
     })
   }
 
-  const lines_go_brrr = new Chart(ctx, {
+  new Chart(ctx, {
     type: 'line',
     data: { labels: timestamps, datasets: datasets },
     options: {
       maintainAspectRatio: false,
       elements: {
-        point: {
-          radius: 1,
-          pointHitRadius: 5,
-        },
-        line: {
-          borderWidth: 5,
-          borderColor: "transparent"
-        }
+        point: { radius: 1, pointHitRadius: 5 },
+        line: { borderWidth: 5, borderColor: "transparent" }
       },
       scales: {
-        y: {
-          ticks: { color: "#ccc" },
-          beginAtZero: false,
-        },
-        x: {
-          ticks: { display: raw_labels, color: "#ccc" },
-          grid: { display: false }
-        },
+        y: { ticks: { color: "#ccc" }, beginAtZero: false },
+        x: { ticks: { display: raw_labels, color: "#ccc" }, grid: { display: false } }
       }
     }
   })
