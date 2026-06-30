@@ -55,6 +55,23 @@
       </div>
 
       <div class="box-container primary-dropshadow no-border-radius">
+        <h1 class="no-margin">⏱️ 24 hour avg. ping</h1>
+        <p class="no-margin"><i class="concrete-text">(Past 24 hours, 5 minute avg.)</i></p>
+        <div style="position: relative; height: 200px; width: 100%;">
+          <canvas id="window_ping_chart"></canvas>
+          <script>
+            chart_maker(
+              'window_ping_chart', {{ window_lists.timestamps | safe }}, [
+                { label: 'WebSocket', data: {{ window_lists.ws | safe }}, color: 'rgb(46, 204, 113)' },
+                { label: 'REST', data: {{ window_lists.rest | safe }}, color: 'rgb(241, 196, 15)' },
+                { label: 'Discord', data: {{ window_lists.discord | safe }}, color: 'rgb(88, 101, 242)' }
+              ], { line_width: 3 }
+            )
+          </script>
+        </div>
+      </div>
+
+      <div class="box-container primary-dropshadow no-border-radius">
         <h1 class="no-margin">📅 Daily avg. ping</h1>
         <p class="no-margin"><i class="concrete-text">(Past 30 days)</i></p>
         <div style="position: relative; height: 200px; width: 100%;">
@@ -65,7 +82,7 @@
                 { label: 'WebSocket', data: {{ daily_lists.ws | safe }}, color: 'rgb(46, 204, 113)' },
                 { label: 'REST', data: {{ daily_lists.rest | safe }}, color: 'rgb(241, 196, 15)' },
                 { label: 'Discord', data: {{ daily_lists.discord | safe }}, color: 'rgb(88, 101, 242)' }
-              ], true
+              ], { raw_labels: true }
             )
           </script>
         </div>

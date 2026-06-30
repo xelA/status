@@ -18,7 +18,7 @@ function unix_to_timestamp(unix) {
 }
 
 
-function chart_maker(name, labels, data = {}, raw_labels = false) {
+function chart_maker(name, labels, data = {}, { raw_labels = false, line_width = 5 } = {}) {
   const ctx = document.getElementById(name).getContext('2d')
   let datasets = []
   let timestamps = []
@@ -45,7 +45,7 @@ function chart_maker(name, labels, data = {}, raw_labels = false) {
       maintainAspectRatio: false,
       elements: {
         point: { radius: 1, pointHitRadius: 5 },
-        line: { borderWidth: 5, borderColor: "transparent" }
+        line: { borderWidth: line_width, borderColor: "transparent" }
       },
       scales: {
         y: { ticks: { color: "#ccc" }, beginAtZero: false },

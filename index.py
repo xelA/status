@@ -54,6 +54,12 @@ async def _index(_request: web.Request) -> web.Response:
             "rest": [round(g["avg_rest"]) for g in reversed(xela.daily_cache_data)],
             "discord": [round(g["avg_discord"]) for g in reversed(xela.daily_cache_data)],
             "days": [g["day"] for g in reversed(xela.daily_cache_data)],
+        },
+        window_lists={
+            "ws": [round(g["avg_ws"]) for g in xela.window_cache_data],
+            "rest": [round(g["avg_rest"]) for g in xela.window_cache_data],
+            "discord": [round(g["avg_discord"]) for g in xela.window_cache_data],
+            "timestamps": [default.unix_timestamp(g["bucket"]) for g in xela.window_cache_data],
         }
     )
 
@@ -76,6 +82,9 @@ async def _api(request: web.Request) -> web.Response:
 
     if "daily" in show_specific:
         payload["daily"] = xela.api_daily()
+
+    if "window" in show_specific:
+        payload["window"] = xela.api_window()
 
     if not payload:
         return default.json_response(

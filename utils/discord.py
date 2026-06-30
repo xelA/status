@@ -120,6 +120,7 @@ class xelAAPI:  # noqa: N801
         self.cache_seconds: int = config["XELA_CACHE_SECONDS"]
 
         self.cache_data: list[dict] = []
+        self.window_cache_data: list[dict] = []
         self.daily_cache_data: list[dict] = []
 
         self.update_cache()
@@ -240,6 +241,18 @@ class xelAAPI:  # noqa: N801
             for g in self.cache_data
         ]
 
+    def api_window(self) -> list[dict]:
+        """ API for the 5-minute average data (past 24 hours). """
+        return [
+            {
+                "timestamp": g["bucket"],
+                "avg_ping_ws": round(g["avg_ws"]),
+                "avg_ping_rest": round(g["avg_rest"]),
+                "avg_ping_discord": round(g["avg_discord"]),
+            }
+            for g in self.window_cache_data
+        ]
+
     def api_daily(self) -> list[dict]:
         """ API for the daily average data (past 30 days). """
         return [
@@ -308,6 +321,12 @@ class xelAAPI:  # noqa: N801
     def update_cache(self):
         self.cache_data = self.db.fetch(
             "SELECT * FROM ping ORDER BY created_at DESC LIMIT 30"
+        )
+        self.window_cache_data = self.db.fetch(
+            "SELECT datetime((strftime('%s', created_at) / 300) * 300, 'unixepoch') as bucket, "
+            "AVG(ping_ws) as avg_ws, AVG(ping_rest) as avg_rest, AVG(ping_discord) as avg_discord "
+            "FROM ping WHERE created_at >= datetime('now', '-1 day') "
+            "GROUP BY bucket ORDER BY bucket ASC"
         )
         self.daily_cache_data = self.db.fetch(
             "SELECT DATE(created_at) as day, AVG(ping_ws) as avg_ws, "
