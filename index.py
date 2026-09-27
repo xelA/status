@@ -1,3 +1,4 @@
+import argparse
 import asyncio
 import logging
 import subprocess
@@ -14,20 +15,35 @@ _log = logging.getLogger("xela_status")
 
 config = DotEnv(".env")
 
+parser = argparse.ArgumentParser(description="xelA status page")
+parser.add_argument(
+    "--fake-discord-error", nargs="?", const="major", choices=("minor", "major", "critical"),
+    metavar="IMPACT", help="Dev: pretend Discord has an incident (minor, major or critical, default major)"
+)
+# parse_known_args since PM2 passes along extra flags (-u)
+args, _ = parser.parse_known_args()
+
 db = PostgresLite("./storage.db").connect()
 
 columns = db.fetch("PRAGMA table_info(ping)")
 if not any(col["name"] == "users" for col in columns):
     db.execute("ALTER TABLE ping ADD COLUMN users BIGINT DEFAULT 0")
 
-xela = discord.xelAAPI(db=db, config=config)  # type: ignore
+xela = discord.xelAAPI(db=db, config=config, fake_discord_impact=args.fake_discord_error)  # type: ignore
+if args.fake_discord_error:
+    _log.warning(f"Faking a {args.fake_discord_error} Discord incident")
 
 git_log = subprocess.getoutput('git log -1 --pretty=format:"%h %s" --abbrev-commit').split(" ")
 git_rev, git_commit = (git_log[0], " ".join(git_log[1:]))
 
 
+def _avg(values: list) -> int:
+    return round(sum(values) / len(values)) if values else 0
+
+
 async def _index(_request: web.Request) -> web.Response:
     reverse_database_xela_cache = xela.cache_data[::-1]
+    window = xela.window_cache_data
 
     return default.html_response(
         "index.html",
@@ -35,11 +51,20 @@ async def _index(_request: web.Request) -> web.Response:
         discordstatus=xela.discord.data_status,
         git_rev=git_rev,
         git_commit=git_commit,
-        data=xela.cache_data,
         server_installs=f"{xela.server_installs:,}",
         user_installs=f"{xela.user_installs:,}",
         viewable_users=f"{xela.users:,}",
-        data_count=len(xela.cache_data),
+        interactions_minute=f"{round(xela.interactions['per_minute']):,}",
+        latest={
+            "ws": xela.ping_ws,
+            "rest": xela.ping_rest,
+            "discord": xela.ping_discord,
+        },
+        avg_24h={
+            "ws": _avg([g["avg_ws"] for g in window]),
+            "rest": _avg([g["avg_rest"] for g in window]),
+            "discord": _avg([g["avg_discord"] for g in window]),
+        },
         lists={
             "ws": [g["ping_ws"] for g in reverse_database_xela_cache],
             "rest": [g["ping_rest"] for g in reverse_database_xela_cache],

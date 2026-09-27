@@ -81,9 +81,30 @@ class StatusIndicator:
 
 
 class DiscordStatus:
-    def __init__(self):
+    def __init__(self, *, fake_impact: str | None = None):
         self.data_status = StatusIndicator.none()
         self.data_metric = {}
+
+        # Dev only, pretend Discord has an incident instead of asking discordstatus.com
+        self.fake_impact = fake_impact
+        if self.fake_impact:
+            self.data_status.update(self._fake_incidents())
+
+    def _fake_incidents(self) -> dict:
+        """ Mimics the discordstatus.com unresolved incidents payload. """
+        now = default.utcnow().isoformat()
+        return {
+            "incidents": [{
+                "name": "Elevated API errors (fake)",
+                "status": "investigating",
+                "impact": self.fake_impact,
+                "created_at": now,
+                "updated_at": now,
+                "incident_updates": [{
+                    "body": "This is a fake incident made with --fake-discord-error, nothing is actually wrong.",
+                }],
+            }]
+        }
 
     @property
     def last_ping(self) -> int:
@@ -94,8 +115,11 @@ class DiscordStatus:
         async with aiohttp.ClientSession() as session:
             try:
                 # Fetch downtime
-                async with session.get("https://discordstatus.com/api/v2/incidents/unresolved.json") as r:
-                    self.data_status.update(await r.json())
+                if self.fake_impact:
+                    self.data_status.update(self._fake_incidents())
+                else:
+                    async with session.get("https://discordstatus.com/api/v2/incidents/unresolved.json") as r:
+                        self.data_status.update(await r.json())
             except Exception as e:
                 _log.error("Failed to fetch discord status incidents", exc_info=e)
 
@@ -108,11 +132,11 @@ class DiscordStatus:
 
 
 class xelAAPI:  # noqa: N801
-    def __init__(self, *, db: PoolConnection, config: dict):
+    def __init__(self, *, db: PoolConnection, config: dict, fake_discord_impact: str | None = None):
         self.db: PoolConnection = db
         self.config = config
 
-        self.discord = DiscordStatus()
+        self.discord = DiscordStatus(fake_impact=fake_discord_impact)
 
         self._data: dict = {}
         self._last_fetch: datetime | None = None

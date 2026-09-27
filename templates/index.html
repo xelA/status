@@ -1,134 +1,230 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
   <head>
     {% set title = "{} status".format(bot.username) %}
     {% set desc = "See how {} is performing right now".format(bot.username) %}
     {% set icon = bot.avatar_url %}
     {% include "_head.html" %}
   </head>
-  <body class="dark-theme github">
-    <div class="container">
-      <section class="me unset">
-        <img draggable="false" src="{{ bot.avatar_url }}" class="image-title">
-        <div class="unset">
-          <h1 class="title">{{ bot }}</h1>
-          <div class="stat-highlights">
-            <span class="chip peter-river-bg">{{ server_installs }} server installs</span>
-            <span class="chip blurple-bg">{{ user_installs }} user installs</span>
-            <span class="chip emerald-bg">{{ viewable_users }} viewable users</span>
-          </div>
-          <p class="undertitle italic">Last reboot: <span id="last_reboot"></span></p>
-          <script>
-            const lr = document.getElementById("last_reboot")
-            lr.innerText = unix_to_timestamp({{ bot.last_reboot }})
-          </script>
-        </div>
-      </section>
 
-      {% if discordstatus.has_issues() %}
-        <div class="box-container alizarin-dropshadow no-border-radius">
-          <h1 class="no-margin">{{ discordstatus.impact.title() }} / {{ discordstatus.name }}</h1>
-          <p class="no-margin">
-            {{ discordstatus.status.title() }}: {{ discordstatus.description }}
-          </p>
-          <div class="status-warning-xela">
-            Note: This might affect how xelA performs, you can follow up on Discord's status
-            <a class="emerald-text" href="{{ discordstatus.url }}" target="_blank">here</a>.
+  {# Ping health, 0 means the bot API didn't answer #}
+  {% macro health(ms, good, okay) -%}
+    {%- if not ms -%}down{%- elif ms < good -%}good{%- elif ms < okay -%}okay{%- else -%}bad{%- endif -%}
+  {%- endmacro %}
+
+  {% macro ping_card(key, label, colour, good, okay) %}
+    {% set state = health(latest[key], good, okay) %}
+    <div class="card stat" style="--bar: {{ colour }}">
+      <div class="stat-top">
+        <span class="stat-label">{{ label }}</span>
+        <span class="dot" data-state="{{ state }}" title="{{ state }}"></span>
+      </div>
+      <div class="stat-value">
+        {% if latest[key] %}{{ latest[key] }}<small>ms</small>{% else %}—{% endif %}
+      </div>
+      <div class="stat-sub">24h avg. <b>{{ avg_24h[key] }} ms</b></div>
+    </div>
+  {% endmacro %}
+
+  <body>
+    <nav class="navbar">
+      <a class="brand" href="https://xela.dev" target="_blank">
+        <img draggable="false" src="{{ bot.avatar_url }}" alt="">
+        <span>{{ bot.username }}</span>
+      </a>
+      <div class="nav-links">
+        <a href="https://xela.dev" target="_blank">Home</a>
+        <a href="https://xela.dev/commands" target="_blank">Commands</a>
+        <a href="https://xela.dev/helpdesk" target="_blank">Helpdesk</a>
+      </div>
+      <button class="theme-toggle" id="theme_toggle" type="button" aria-label="Toggle theme" title="Toggle theme">
+        <svg class="icon-moon" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.39 5.39 0 0 1-4.4 2.26 5.4 5.4 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+        <svg class="icon-sun" viewBox="0 0 24 24"><path fill="currentColor" d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM2 13h2a1 1 0 0 0 0-2H2a1 1 0 0 0 0 2zm18 0h2a1 1 0 0 0 0-2h-2a1 1 0 0 0 0 2zM11 2v2a1 1 0 0 0 2 0V2a1 1 0 0 0-2 0zm0 18v2a1 1 0 0 0 2 0v-2a1 1 0 0 0-2 0zM5.99 4.58a1 1 0 0 0-1.41 1.41l1.06 1.06a1 1 0 0 0 1.41-1.41L5.99 4.58zm12.37 12.37a1 1 0 0 0-1.41 1.41l1.06 1.06a1 1 0 0 0 1.41-1.41l-1.06-1.06zm1.06-10.96a1 1 0 0 0-1.41-1.41l-1.06 1.06a1 1 0 0 0 1.41 1.41l1.06-1.06zM7.05 18.36a1 1 0 0 0-1.41-1.41l-1.06 1.06a1 1 0 0 0 1.41 1.41l1.06-1.06z"/></svg>
+      </button>
+    </nav>
+
+    <div class="page">
+
+    <main class="container">
+      <header class="page-header">
+        <div class="page-text">
+          <h2 class="page-title"><span class="hash" aria-hidden="true">#</span>status</h2>
+          <div class="page-subtitle">
+            Live performance and latency
+            {% if bot.last_reboot %}
+              · Up for <span class="uptime" data-since="{{ bot.last_reboot }}"></span>
+            {% endif %}
+          </div>
+        </div>
+        <div class="page-actions">
+          <a class="pill" href="/api?show=latest" target="_blank">Raw JSON</a>
+          <a class="pill" href="{{ discordstatus.url }}" target="_blank">Discord status</a>
+        </div>
+      </header>
+
+      {% if not latest.ws %}
+        <div class="card banner" style="--bar: var(--red)">
+          <span class="dot" data-state="down"></span>
+          <div>
+            <div class="card-title">Bot isn't responding</div>
+            <p class="card-desc">We couldn't reach the bot on the last check, it might be rebooting. This page refreshes its data every few seconds.</p>
           </div>
         </div>
       {% endif %}
 
-      <div class="box-container primary-dropshadow no-border-radius">
-        <h1 class="no-margin">📶 Ping status</h1>
-        <p class="no-margin"><i class="concrete-text">(Past 30 minutes)</i></p>
-        <div style="position: relative; height: 200px; width: 100%;">
-          <canvas id="ping_chart"></canvas>
-          <script>
-            chart_maker(
-              'ping_chart', {{ lists.timestamps | safe }}, [
-                { label: 'WebSocket', data: {{ lists.ws | safe }}, color: 'rgb(46, 204, 113)' },
-                { label: 'REST', data: {{ lists.rest | safe }}, color: 'rgb(241, 196, 15)' },
-                { label: 'Discord', data: {{ lists.discord | safe }}, color: 'rgb(88, 101, 242)' }
-              ]
-            )
-          </script>
+      {% if discordstatus.has_issues() %}
+        <div class="card banner" data-impact="{{ discordstatus.impact }}">
+          <span class="dot" data-state="{{ 'bad' if discordstatus.impact in ('major', 'critical') else 'okay' }}"></span>
+          <div>
+            <div class="card-title">
+              Discord: {{ discordstatus.name }}
+              <span class="badge">{{ discordstatus.impact }}</span>
+              <span class="badge badge-grey">{{ discordstatus.status }}</span>
+            </div>
+            <p class="card-desc">{{ discordstatus.description }}</p>
+            <p class="card-desc">
+              This might affect how {{ bot.username }} performs, you can follow up on
+              <a href="{{ discordstatus.url }}" target="_blank">Discord's status page</a>.
+            </p>
+          </div>
         </div>
-      </div>
+      {% endif %}
 
-      <div class="box-container primary-dropshadow no-border-radius">
-        <h1 class="no-margin">⏱️ 24 hour avg. ping</h1>
-        <p class="no-margin"><i class="concrete-text">(Past 24 hours, 5 minute avg.)</i></p>
-        <div style="position: relative; height: 200px; width: 100%;">
-          <canvas id="window_ping_chart"></canvas>
-          <script>
-            chart_maker(
-              'window_ping_chart', {{ window_lists.timestamps | safe }}, [
-                { label: 'WebSocket', data: {{ window_lists.ws | safe }}, color: 'rgb(46, 204, 113)' },
-                { label: 'REST', data: {{ window_lists.rest | safe }}, color: 'rgb(241, 196, 15)' },
-                { label: 'Discord', data: {{ window_lists.discord | safe }}, color: 'rgb(88, 101, 242)' }
-              ], { line_width: 3 }
-            )
-          </script>
+      {% if latest.ws and not discordstatus.has_issues() %}
+        <div class="card banner" style="--bar: var(--green)">
+          <span class="dot" data-state="good"></span>
+          <div>
+            <div class="card-title">All systems operational</div>
+            <p class="card-desc">{{ bot.username }} and Discord are both running normally.</p>
+          </div>
         </div>
-      </div>
+      {% endif %}
 
-      <div class="box-container primary-dropshadow no-border-radius">
-        <h1 class="no-margin">📅 Daily avg. ping</h1>
-        <p class="no-margin"><i class="concrete-text">(Past 30 days)</i></p>
-        <div style="position: relative; height: 200px; width: 100%;">
-          <canvas id="daily_ping_chart"></canvas>
-          <script>
-            chart_maker(
-              'daily_ping_chart', {{ daily_lists.days | tojson | safe }}, [
-                { label: 'WebSocket', data: {{ daily_lists.ws | safe }}, color: 'rgb(46, 204, 113)' },
-                { label: 'REST', data: {{ daily_lists.rest | safe }}, color: 'rgb(241, 196, 15)' },
-                { label: 'Discord', data: {{ daily_lists.discord | safe }}, color: 'rgb(88, 101, 242)' }
-              ], { raw_labels: true }
-            )
-          </script>
+      <h3 class="category">Right now</h3>
+      <section class="grid grid-3">
+        {{ ping_card("ws", "WebSocket", "var(--ws)", 200, 500) }}
+        {{ ping_card("rest", "REST", "var(--rest)", 400, 1000) }}
+        {{ ping_card("discord", "Discord", "var(--discord)", 100, 250) }}
+      </section>
+      <section class="grid grid-4">
+        <div class="card stat stat-small">
+          <span class="stat-label">Server installs</span>
+          <div class="stat-value">{{ server_installs }}</div>
         </div>
+        <div class="card stat stat-small">
+          <span class="stat-label">User installs</span>
+          <div class="stat-value">{{ user_installs }}</div>
+        </div>
+        <div class="card stat stat-small">
+          <span class="stat-label">Viewable users</span>
+          <div class="stat-value">{{ viewable_users }}</div>
+        </div>
+        <div class="card stat stat-small">
+          <span class="stat-label">Interactions / min</span>
+          <div class="stat-value">{{ interactions_minute }}</div>
+        </div>
+      </section>
+
+      <h3 class="category">Latency</h3>
+      <section class="charts">
+        <div class="card chart-card">
+          <div class="chart-head">
+            <div>
+              <div class="card-title">Live ping</div>
+              <p class="card-desc">Past 30 checks</p>
+            </div>
+            <div class="legend" data-chart="ping_chart"></div>
+          </div>
+          <div class="chart-box"><canvas id="ping_chart"></canvas></div>
+        </div>
+
+        <div class="card chart-card">
+          <div class="chart-head">
+            <div>
+              <div class="card-title">Past 24 hours</div>
+              <p class="card-desc">5 minute averages</p>
+            </div>
+            <div class="legend" data-chart="window_ping_chart"></div>
+          </div>
+          <div class="chart-box"><canvas id="window_ping_chart"></canvas></div>
+        </div>
+
+        <div class="card chart-card">
+          <div class="chart-head">
+            <div>
+              <div class="card-title">Past 30 days</div>
+              <p class="card-desc">Daily averages</p>
+            </div>
+            <div class="legend" data-chart="daily_ping_chart"></div>
+          </div>
+          <div class="chart-box"><canvas id="daily_ping_chart"></canvas></div>
+        </div>
+      </section>
+
+      <h3 class="category">What the metrics mean</h3>
+      <section class="grid grid-3">
+        <div class="card" style="--bar: var(--ws)">
+          <div class="card-title">WebSocket</div>
+          <p class="card-desc">
+            The real-time latency of the persistent WebSocket connection between <b>{{ bot.username }}</b> and the API.
+            Unlike REST, the connection stays open, which makes it a good measure of stability and responsiveness, similar to in-game latency.
+          </p>
+        </div>
+        <div class="card" style="--bar: var(--rest)">
+          <div class="card-title">REST</div>
+          <p class="card-desc">
+            The total round-trip time for <b>{{ bot }}</b> to send an HTTP request to the API and get a response back.
+            It shows how quickly the bot can talk to the API over standard web requests.
+          </p>
+        </div>
+        <div class="card" style="--bar: var(--discord)">
+          <div class="card-title">Discord</div>
+          <p class="card-desc">
+            A latency metric published by Discord themselves, estimating the delay between their servers and the API.
+            Since Discord has internal network insight, it's a useful reference to compare the other two against.
+          </p>
+        </div>
+      </section>
+
+      <h3 class="category">For the nerds</h3>
+      <div class="card api-card">
+        <p class="card-desc">
+          This page lets you check that the bot is running smoothly, and whether your internet is <i>shit</i> or Discord is drunk yet again.
+          Want the <b>raw</b> JSON behind it? Use <a href="/api?show=latest" target="_blank"><code>/api?show=latest</code></a>.
+        </p>
+        <p class="card-desc">
+          Valid <code>show</code> values are
+          <code>latest</code>, <code>history</code>, <code>window</code>, <code>daily</code> and <code>user</code>.
+          Separate several with a comma, for example <a href="/api?show=latest,user" target="_blank"><code>latest,user</code></a>.
+        </p>
       </div>
+    </main>
 
-      <div class="box-container primary-dropshadow no-border-radius metric-explain">
-        <h1 class="no-margin">📖 Metric explanation</h1>
-
-        <h2 class="header">↔️ REST</h2>
-        <p class="description">
-            Measures the total round-trip time for <b>{{ bot }}</b> to send an HTTP request to the API and receive a response.
-            This metric reflects how quickly the bot can communicate with the API over standard web requests.
-        </p>
-
-        <h2 class="header">🔁 WebSocket</h2>
-        <p class="description">
-            Represents the real-time latency of the persistent WebSocket connection between <b>{{ bot }}</b> and the API.
-            Unlike REST, which sends separate requests, WebSocket maintains an open connection, making this metric useful for tracking stability and responsiveness, similar to in-game latency.
-        </p>
-
-        <h2 class="header">📶 Discord</h2>
-        <p class="description">
-            A latency metric provided by Discord itself, showing their estimate of the delay between <b>{{ bot }}</b> and their servers.
-            Since Discord has internal network insights, this serves as a useful reference point for comparison with the other metrics.
-        </p>
+    <footer class="footer">
+      <div>
+        <span>© 2017-<span id="year"></span> {{ bot.username }}</span>
+        <a href="https://xela.dev/helpdesk/terms" target="_blank">Terms</a>
+        <a href="https://xela.dev/helpdesk/privacy" target="_blank">Privacy</a>
       </div>
-
-      <div class="box-container no-margin">
-        <p class="footer-note no-margin">
-          <span class="bold sun-flower-text">NOTE: </span>
-          With this website, you can ensure that the bot is running smoothly,
-          and check if your internet connection is <i>shit</i> or Discord is drunk yet again.
-          <br><br>
-          Also... are you a nerd and want the <b>raw</b> JSON data of <b>{{ bot }}</b>?
-          Click <a href="/api?show=latest" target="_blank" class="peter-river-text">here</a>.
-          Valid show arguments: <code>latest</code>, <code>history</code>, <code>daily</code>, <code>user</code>. You use <code>, (comma)</code>
-          to separate multiple arguments.
-        </p>
-
-        <p class="git-revision">
-          Git revision: <b><a href="https://github.com/xelA/Status/commit/{{ git_rev }}" target="_blank" class="sun-flower-text">{{ git_rev }}</a></b>
-          <i>({{ git_commit }})</i>
-        </p>
+      <div>
+        <span>
+          Git revision:
+          <a href="https://github.com/xelA/Status/commit/{{ git_rev }}" target="_blank" title="{{ git_commit }}">{{ git_rev }}</a>
+        </span>
       </div>
-
-
+    </footer>
     </div>
+
+    <script>
+      const PING_SERIES = [
+        { key: "ws", label: "WebSocket", color: "--ws" },
+        { key: "rest", label: "REST", color: "--rest" },
+        { key: "discord", label: "Discord", color: "--discord" },
+      ]
+
+      chart_maker("ping_chart", {{ lists.timestamps | tojson }}, PING_SERIES, {{ lists | tojson }})
+      chart_maker("window_ping_chart", {{ window_lists.timestamps | tojson }}, PING_SERIES, {{ window_lists | tojson }})
+      chart_maker("daily_ping_chart", {{ daily_lists.days | tojson }}, PING_SERIES, {{ daily_lists | tojson }}, { raw_labels: true })
+    </script>
   </body>
 </html>

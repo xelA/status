@@ -1,14 +1,21 @@
 APP_NAME = Status
 PRISMA_SCHEME = "./schema.prisma"
+IMPACT ?= major
 
 target:
-	@awk -F ':|##' '/^[^\t].+?:.*?##/ { printf "\033[0;36m%-15s\033[0m %s\n", $$1, $$NF }' $(MAKEFILE_LIST)
+	@awk -F ':|##' '/^[^\t].+?:.*?##/ { printf "\033[0;36m%-20s\033[0m %s\n", $$1, $$NF }' $(MAKEFILE_LIST)
 
 install:  ## Install the project
 	uv sync
 
 install_dev:	 ## Install the package in development mode
 	uv sync --all-extras
+
+dev:  ## Run the website locally
+	uv run index.py
+
+dev_discord_error:  ## Run locally with a fake Discord incident (IMPACT=minor|major|critical)
+	uv run index.py --fake-discord-error $(IMPACT)
 
 git_pull:  ## Pull the latest code from git
 	git pull
