@@ -174,7 +174,7 @@ a code { color: var(--primary); }
   margin-right: 10px;
   border-radius: 3px;
   transform: rotate(45deg);
-  background-color: var(--bg-page);
+  background-color: #d9d9d9;
 }
 
 .external-icon {
@@ -185,7 +185,7 @@ a code { color: var(--primary); }
   opacity: .7;
 }
 
-[data-theme="light"] .nav-links a + a::before { background-color: var(--bg-deep); }
+[data-theme="light"] .nav-links a + a::before { background-color: #303030; }
 
 .theme-toggle {
   margin-left: auto;
