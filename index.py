@@ -54,7 +54,7 @@ async def _index(_request: web.Request) -> web.Response:
         server_installs=f"{xela.server_installs:,}",
         user_installs=f"{xela.user_installs:,}",
         viewable_users=f"{xela.users:,}",
-        interactions_minute=f"{round(xela.interactions['per_minute']):,}",
+        avg_users_server=f"{round(xela.avg_users_server):,}",
         latest={
             "ws": xela.ping_ws,
             "rest": xela.ping_rest,
