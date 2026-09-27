@@ -9,6 +9,9 @@ from utils import default
 
 _log = logging.getLogger("xela_status")
 
+# Shown until the bot has told us its avatar, or if Discord's CDN fails to load it
+FALLBACK_AVATAR = "/static/img/avatar.png"
+
 
 class StatusIndicator:
     def __init__(self, data: dict):
@@ -209,10 +212,13 @@ class xelAAPI:  # noqa: N801
 
     @property
     def username(self) -> str:
-        return self.me.get("username", "NotFound")
+        # Not fetched from the bot yet, we know who it is anyway
+        return self.me.get("username") or "xelA"
 
     @property
     def avatar_url(self) -> str:
+        if not self.avatar:
+            return FALLBACK_AVATAR
         return "https://cdn.discordapp.com/avatars/{id}/{avatar}.{format}?size={size}".format(
             id=self.id, avatar=self.avatar, format="png", size=512
         )
